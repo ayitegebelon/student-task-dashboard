@@ -4,61 +4,241 @@
     <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/task--v1.png">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Task Dashboard</title>
+    <title>Student Task Dashboard - Smart Focus for Academic Success</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
-<body>
+<body class="landing-page">
 
-<header>
-    <h1><i class="fa-solid fa-graduation-cap"></i> Student Task Dashboard</h1>
-</header>
-
-<main class="container">
-    <div class="task-box">
-        <input type="text" id="taskInput" placeholder="Enter a new academic task..." required>
-        <select id="prioritySelect">
-            <option value="Low">Low Priority</option>
-            <option value="Medium" selected>Medium Priority</option>
-            <option value="High">High Priority</option>
-        </select>
-        <button id="addBtn"><i class="fa-solid fa-plus"></i> Add Task</button>
-    </div>
-
-    <div class="controls-box">
-        <div class="search-box">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" id="searchInput" placeholder="Search tasks...">
+<!-- Navigation -->
+<nav class="landing-nav">
+    <div class="nav-container">
+        <div class="nav-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>TaskFlow</span>
         </div>
-        <div class="filter-tabs">
-            <button class="filter-btn active" data-filter="all">All</button>
-            <button class="filter-btn" data-filter="active">Active</button>
-            <button class="filter-btn" data-filter="completed">Completed</button>
+        <div class="nav-links">
+            <a href="#features" class="nav-link">Features</a>
+            <a href="#how-it-works" class="nav-link">How It Works</a>
+            <a href="login.html" class="btn btn-ghost">Sign In</a>
+            <a href="register.html" class="btn btn-primary">Get Started</a>
         </div>
     </div>
+</nav>
 
-    <ul id="taskList"></ul>
-
-    <div class="statistics">
-        <div class="stat-item">
-            <p>Total Tasks</p>
-            <span id="total">0</span>
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-container">
+        <div class="hero-content">
+            <h1 class="hero-title">
+                Master Your Studies with <span class="gradient-text">Smart Focus</span>
+            </h1>
+            <p class="hero-subtitle">
+                The ultimate task management system designed for students. Track assignments, 
+                manage study sessions with Pomodoro technique, and achieve your academic goals.
+            </p>
+            <div class="hero-cta">
+                <a href="register.html" class="btn btn-primary btn-large">
+                    <i class="fa-solid fa-rocket"></i> Get Started Free
+                </a>
+                <a href="login.html" class="btn btn-ghost btn-large">
+                    <i class="fa-solid fa-sign-in-alt"></i> Sign In
+                </a>
+            </div>
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <span class="stat-number">25K+</span>
+                    <span class="stat-label">Students</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">1M+</span>
+                    <span class="stat-label">Tasks Completed</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">4.9★</span>
+                    <span class="stat-label">Rating</span>
+                </div>
+            </div>
         </div>
-        <div class="stat-item">
-            <p>Completed</p>
-            <span id="completed">0</span>
-        </div>
-        <div class="stat-item">
-            <p>Remaining</p>
-            <span id="remaining">0</span>
+        <div class="hero-visual">
+            <div class="hero-card card-pro">
+                <div class="hero-card-header">
+                    <div class="hero-card-title">Today's Focus</div>
+                    <div class="hero-card-badge">3 Tasks</div>
+                </div>
+                <div class="hero-card-body">
+                    <div class="hero-task-item">
+                        <div class="hero-task-checkbox checked"></div>
+                        <span class="hero-task-text completed">Complete Calculus Assignment</span>
+                    </div>
+                    <div class="hero-task-item">
+                        <div class="hero-task-checkbox checked"></div>
+                        <span class="hero-task-text completed">Read Chapter 5 - Physics</span>
+                    </div>
+                    <div class="hero-task-item">
+                        <div class="hero-task-checkbox"></div>
+                        <span class="hero-task-text">Research Paper Draft</span>
+                        <span class="hero-task-badge urgent">Due Tomorrow</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
-</main>
+</section>
 
-<footer>
-    <p>© <span id="currentYear"></span> INSA Cyber Talent Center | Student Task Dashboard</p>
+<!-- Features Section -->
+<section id="features" class="features-section">
+    <div class="section-container">
+        <div class="section-header">
+            <h2 class="section-title">Everything You Need to Succeed</h2>
+            <p class="section-subtitle">Powerful features designed specifically for student workflows</p>
+        </div>
+        <div class="features-grid">
+            <div class="feature-card card-pro">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-bullseye"></i>
+                </div>
+                <h3 class="feature-title">Smart Workload Estimator</h3>
+                <p class="feature-description">
+                    AI-powered task analysis that estimates focus sessions needed based on complexity 
+                    and energy requirements.
+                </p>
+            </div>
+            <div class="feature-card card-pro">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <h3 class="feature-title">Pomodoro Focus Timer</h3>
+                <p class="feature-description">
+                    Built-in Pomodoro timer with custom session lengths and custom alarm sounds 
+                    to maximize your productivity.
+                </p>
+            </div>
+            <div class="feature-card card-pro">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <h3 class="feature-title">Analytics Dashboard</h3>
+                <p class="feature-description">
+                    Track your study streaks, completion rates, and weekly progress with beautiful 
+                    visual analytics.
+                </p>
+            </div>
+            <div class="feature-card card-pro">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-link"></i>
+                </div>
+                <h3 class="feature-title">Resource Attachments</h3>
+                <p class="feature-description">
+                    Attach study materials, research papers, and reference links directly to your 
+                    tasks for easy access.
+                </p>
+            </div>
+            <div class="feature-card card-pro">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-list-check"></i>
+                </div>
+                <h3 class="feature-title">Sub-task Management</h3>
+                <p class="feature-description">
+                    Break down complex assignments into manageable sub-tasks with progress tracking 
+                    and completion badges.
+                </p>
+            </div>
+            <div class="feature-card card-pro">
+                <div class="feature-icon">
+                    <i class="fa-solid fa-palette"></i>
+                </div>
+                <h3 class="feature-title">Custom Themes</h3>
+                <p class="feature-description">
+                    Personalize your workspace with beautiful accent colors and dark/light themes 
+                    that reduce eye strain.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section id="how-it-works" class="how-it-works-section">
+    <div class="section-container">
+        <div class="section-header">
+            <h2 class="section-title">How TaskFlow Works</h2>
+            <p class="section-subtitle">Get started in three simple steps</p>
+        </div>
+        <div class="steps-container">
+            <div class="step-item">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <h3 class="step-title">Sign Up Free</h3>
+                    <p class="step-description">
+                        Create your account in seconds. No credit card required. 
+                        Start organizing your academic life immediately.
+                    </p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <h3 class="step-title">Add Your Tasks</h3>
+                    <p class="step-description">
+                        Add assignments, projects, and study goals. Use the smart estimator 
+                        to plan your focus sessions effectively.
+                    </p>
+                </div>
+            </div>
+            <div class="step-item">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <h3 class="step-title">Focus & Achieve</h3>
+                    <p class="step-description">
+                        Use the Pomodoro timer for focused work sessions. Track your progress 
+                        and watch your productivity soar.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA Section -->
+<section class="cta-section">
+    <div class="cta-container">
+        <h2 class="cta-title">Ready to Transform Your Study Habits?</h2>
+        <p class="cta-subtitle">
+            Join thousands of students who are already achieving their academic goals with TaskFlow.
+        </p>
+        <div class="cta-buttons">
+            <a href="register.html" class="btn btn-primary btn-large">
+                <i class="fa-solid fa-rocket"></i> Start Your Journey
+            </a>
+            <a href="#features" class="btn btn-ghost btn-large">
+                Learn More
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="landing-footer">
+    <div class="footer-container">
+        <div class="footer-brand">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <span>TaskFlow</span>
+        </div>
+        <div class="footer-links">
+            <a href="#features" class="footer-link">Features</a>
+            <a href="#how-it-works" class="footer-link">How It Works</a>
+            <a href="login.html" class="footer-link">Sign In</a>
+            <a href="register.html" class="footer-link">Get Started</a>
+        </div>
+        <div class="footer-copyright">
+            © <span id="currentYear"></span> TaskFlow. All rights reserved.
+        </div>
+    </div>
 </footer>
 
-<script src="js/script.js"></script>
+<script>
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
+</script>
 </body>
 </html>

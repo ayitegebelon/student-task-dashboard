@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/task--v1.png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Task Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="js/auth-guard.js"></script>
+</head>
+<body>
+
+<header>
+    <div class="header-content">
+        <h1><i class="fa-solid fa-graduation-cap"></i> Student Task Dashboard</h1>
+        <div class="header-controls">
+            <span id="userDisplay" style="color: var(--text-muted); font-size: 0.9rem; margin-right: 10px;"></span>
+            <button id="logoutBtn" class="theme-toggle" title="Logout" style="margin-right: 8px;">
+                <i class="fa-solid fa-right-from-bracket"></i>
+            </button>
+            <select id="accentPreset" class="accent-selector">
+                <option value="default">Default Blue</option>
+                <option value="emerald">Emerald Academic</option>
+                <option value="violet">Royal Violet</option>
+            </select>
+            <button id="themeToggle" class="theme-toggle" title="Toggle Theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="container">
+    <!-- Analytics Dashboard -->
+    <div class="analytics-dashboard">
+        <div class="analytics-header">
+            <div class="analytics-stat">
+                <span class="analytics-icon"><i class="fa-solid fa-check-circle"></i></span>
+                <div class="analytics-info">
+                    <p class="analytics-label">Completed</p>
+                    <span class="analytics-value" id="totalCompleted">0</span>
+                </div>
+            </div>
+            <div class="analytics-stat">
+                <span class="analytics-icon"><i class="fa-solid fa-fire"></i></span>
+                <div class="analytics-info">
+                    <p class="analytics-label">Study Streak</p>
+                    <span class="analytics-value" id="studyStreak">0 days</span>
+                </div>
+            </div>
+            <div class="analytics-stat">
+                <span class="analytics-icon"><i class="fa-solid fa-chart-line"></i></span>
+                <div class="analytics-info">
+                    <p class="analytics-label">Completion Rate</p>
+                    <span class="analytics-value" id="completionRate">0%</span>
+                </div>
+            </div>
+        </div>
+        <div class="analytics-visuals">
+            <div class="progress-ring-container">
+                <svg class="progress-ring" width="120" height="120">
+                    <circle class="progress-ring-bg" stroke="var(--border-color)" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
+                    <circle class="progress-ring-circle" stroke="var(--accent-primary)" stroke-width="8" fill="transparent" r="52" cx="60" cy="60" stroke-linecap="round"/>
+                </svg>
+                <div class="progress-ring-text">
+                    <span id="progressRingValue">0%</span>
+                </div>
+            </div>
+            <div class="weekly-chart">
+                <p class="chart-title">Weekly Progress</p>
+                <div class="chart-bars" id="weeklyChart">
+                    <div class="chart-bar" data-day="Mon"><div class="bar-fill"></div><span class="bar-label">Mon</span></div>
+                    <div class="chart-bar" data-day="Tue"><div class="bar-fill"></div><span class="bar-label">Tue</span></div>
+                    <div class="chart-bar" data-day="Wed"><div class="bar-fill"></div><span class="bar-label">Wed</span></div>
+                    <div class="chart-bar" data-day="Thu"><div class="bar-fill"></div><span class="bar-label">Thu</span></div>
+                    <div class="chart-bar" data-day="Fri"><div class="bar-fill"></div><span class="bar-label">Fri</span></div>
+                    <div class="chart-bar" data-day="Sat"><div class="bar-fill"></div><span class="bar-label">Sat</span></div>
+                    <div class="chart-bar" data-day="Sun"><div class="bar-fill"></div><span class="bar-label">Sun</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="task-box">
+        <input type="text" id="taskInput" placeholder="Enter a new academic task..." required>
+        <select id="prioritySelect">
+            <option value="Low">Low Priority</option>
+            <option value="Medium" selected>Medium Priority</option>
+            <option value="High">High Priority</option>
+        </select>
+        <select id="subjectSelect">
+            <option value="General">General</option>
+            <option value="Math">Math</option>
+            <option value="Physics">Physics</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Biology">Biology</option>
+            <option value="English">English</option>
+            <option value="History">History</option>
+            <option value="custom">+ Add Custom Subject...</option>
+        </select>
+        <input type="text" id="customSubjectInput" placeholder="Enter custom subject name..." style="display: none;">
+        <input type="date" id="dueDateInput">
+        <button id="addBtn"><i class="fa-solid fa-plus"></i> Add Task</button>
+        <button id="smartEstimatorBtn" class="smart-estimator-btn" title="Smart Workload Estimator"><i class="fa-solid fa-brain"></i></button>
+    </div>
+
+    <!-- Attachments Section -->
+    <div class="attachments-section">
+        <div class="attachment-input-group">
+            <input type="text" id="attachmentUrl" placeholder="Add resource URL (e.g., https://docs.google.com/...)">
+            <input type="text" id="attachmentName" placeholder="Resource name (e.g., Lecture Slides)">
+            <button id="addAttachmentBtn" class="add-attachment-btn"><i class="fa-solid fa-link"></i> Add Link</button>
+        </div>
+        <div class="attachments-list" id="attachmentsList"></div>
+    </div>
+
+    <div class="controls-box">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Search tasks...">
+        </div>
+        <div class="filter-tabs">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="completed">Completed</button>
+        </div>
+    </div>
+    <div class="subject-filters" id="subjectFilters"></div>
+
+    <ul id="taskList"></ul>
+
+    <div class="statistics">
+        <div class="stat-item">
+            <p>Total Tasks</p>
+            <span id="total">0</span>
+        </div>
+        <div class="stat-item">
+            <p>Completed</p>
+            <span id="completed">0</span>
+        </div>
+        <div class="stat-item">
+            <p>Remaining</p>
+            <span id="remaining">0</span>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <p>&copy; <span id="currentYear"></span> INSA Cyber Talent Center | Student Task Dashboard</p>
+</footer>
+
+<!-- Pomodoro Timer Modal -->
+<div class="pomodoro-modal" id="pomodoroModal">
+    <div class="pomodoro-content">
+        <div class="pomodoro-header">
+            <h3>Focus Mode</h3>
+            <button class="close-modal" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="pomodoro-task-name" id="pomodoroTaskName"></div>
+        <div class="pomodoro-timer" id="pomodoroTimer">25:00</div>
+        <div class="timer-duration-controls">
+            <div class="timer-presets">
+                <button class="timer-preset" data-minutes="15">15m</button>
+                <button class="timer-preset active" data-minutes="25">25m</button>
+                <button class="timer-preset" data-minutes="50">50m</button>
+            </div>
+            <div class="timer-custom">
+                <label for="timerCustomMinutes">Custom (min):</label>
+                <input type="number" id="timerCustomMinutes" min="1" max="180" value="25">
+            </div>
+        </div>
+        <div class="timer-sound-controls">
+            <div class="custom-audio-upload">
+                <label for="customAlarmSound">Custom Alarm Sound:</label>
+                <input type="file" id="customAlarmSound" accept="audio/*">
+            </div>
+            <button class="test-sound-btn" id="testSoundBtn"><i class="fa-solid fa-volume-high"></i> Test Sound</button>
+        </div>
+        <div class="pomodoro-controls">
+            <button class="pomodoro-btn" id="startTimer"><i class="fa-solid fa-play"></i> Start</button>
+            <button class="pomodoro-btn" id="pauseTimer"><i class="fa-solid fa-pause"></i> Pause</button>
+            <button class="pomodoro-btn" id="resetTimer"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+        </div>
+    </div>
+</div>
+
+<!-- Smart Workload Estimator Modal -->
+<div class="smart-estimator-modal" id="smartEstimatorModal">
+    <div class="smart-estimator-content">
+        <div class="smart-estimator-header">
+            <h3><i class="fa-solid fa-brain"></i> Smart Workload Estimator</h3>
+            <button class="close-modal" id="closeEstimatorModal"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="smart-estimator-body">
+            <div class="estimator-input">
+                <label for="estimatorTaskInput">Task Name:</label>
+                <input type="text" id="estimatorTaskInput" placeholder="Enter task name...">
+            </div>
+            <div class="estimator-input">
+                <label for="estimatorHoursInput">Estimated Hours (optional):</label>
+                <input type="number" id="estimatorHoursInput" min="0.5" max="24" step="0.5" placeholder="e.g., 2.5">
+            </div>
+            <div class="estimator-result" id="estimatorResult"></div>
+            <div class="estimator-actions">
+                <button class="estimator-btn" id="estimateBtn"><i class="fa-solid fa-calculator"></i> Estimate</button>
+                <button class="estimator-btn split-btn" id="splitTaskBtn" style="display: none;"><i class="fa-solid fa-scissors"></i> Split Task</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="js/script.js"></script>
+</body>
+</html>
