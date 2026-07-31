@@ -11,7 +11,19 @@
 <body>
 
 <header>
-    <h1><i class="fa-solid fa-graduation-cap"></i> Student Task Dashboard</h1>
+    <div class="header-content">
+        <h1><i class="fa-solid fa-graduation-cap"></i> Student Task Dashboard</h1>
+        <div class="header-controls">
+            <select id="accentPreset" class="accent-selector">
+                <option value="default">Default Blue</option>
+                <option value="emerald">Emerald Academic</option>
+                <option value="violet">Royal Violet</option>
+            </select>
+            <button id="themeToggle" class="theme-toggle" title="Toggle Theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
+        </div>
+    </div>
 </header>
 
 <main class="container">
@@ -22,7 +34,21 @@
             <option value="Medium" selected>Medium Priority</option>
             <option value="High">High Priority</option>
         </select>
+        <select id="subjectSelect">
+            <option value="General">General</option>
+            <option value="Math">Math</option>
+            <option value="Physics">Physics</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Chemistry">Chemistry</option>
+            <option value="Biology">Biology</option>
+            <option value="English">English</option>
+            <option value="History">History</option>
+            <option value="custom">+ Add Custom Subject...</option>
+        </select>
+        <input type="text" id="customSubjectInput" placeholder="Enter custom subject name..." style="display: none;">
+        <input type="date" id="dueDateInput">
         <button id="addBtn"><i class="fa-solid fa-plus"></i> Add Task</button>
+        <button id="smartEstimatorBtn" class="smart-estimator-btn" title="Smart Workload Estimator"><i class="fa-solid fa-brain"></i></button>
     </div>
 
     <div class="controls-box">
@@ -36,6 +62,7 @@
             <button class="filter-btn" data-filter="completed">Completed</button>
         </div>
     </div>
+    <div class="subject-filters" id="subjectFilters"></div>
 
     <ul id="taskList"></ul>
 
@@ -56,8 +83,68 @@
 </main>
 
 <footer>
-    <p>© <span id="currentYear"></span> INSA Cyber Talent Center | Student Task Dashboard</p>
+    <p>&copy; <span id="currentYear"></span> INSA Cyber Talent Center | Student Task Dashboard</p>
 </footer>
+
+<!-- Pomodoro Timer Modal -->
+<div class="pomodoro-modal" id="pomodoroModal">
+    <div class="pomodoro-content">
+        <div class="pomodoro-header">
+            <h3>Focus Mode</h3>
+            <button class="close-modal" id="closeModal"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="pomodoro-task-name" id="pomodoroTaskName"></div>
+        <div class="pomodoro-timer" id="pomodoroTimer">25:00</div>
+        <div class="timer-duration-controls">
+            <div class="timer-presets">
+                <button class="timer-preset" data-minutes="15">15m</button>
+                <button class="timer-preset active" data-minutes="25">25m</button>
+                <button class="timer-preset" data-minutes="50">50m</button>
+            </div>
+            <div class="timer-custom">
+                <label for="timerCustomMinutes">Custom (min):</label>
+                <input type="number" id="timerCustomMinutes" min="1" max="180" value="25">
+            </div>
+        </div>
+        <div class="timer-sound-controls">
+            <div class="custom-audio-upload">
+                <label for="customAlarmSound">Custom Alarm Sound:</label>
+                <input type="file" id="customAlarmSound" accept="audio/*">
+            </div>
+            <button class="test-sound-btn" id="testSoundBtn"><i class="fa-solid fa-volume-high"></i> Test Sound</button>
+        </div>
+        <div class="pomodoro-controls">
+            <button class="pomodoro-btn" id="startTimer"><i class="fa-solid fa-play"></i> Start</button>
+            <button class="pomodoro-btn" id="pauseTimer"><i class="fa-solid fa-pause"></i> Pause</button>
+            <button class="pomodoro-btn" id="resetTimer"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+        </div>
+    </div>
+</div>
+
+<!-- Smart Workload Estimator Modal -->
+<div class="smart-estimator-modal" id="smartEstimatorModal">
+    <div class="smart-estimator-content">
+        <div class="smart-estimator-header">
+            <h3><i class="fa-solid fa-brain"></i> Smart Workload Estimator</h3>
+            <button class="close-modal" id="closeEstimatorModal"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="smart-estimator-body">
+            <div class="estimator-input">
+                <label for="estimatorTaskInput">Task Name:</label>
+                <input type="text" id="estimatorTaskInput" placeholder="Enter task name...">
+            </div>
+            <div class="estimator-input">
+                <label for="estimatorHoursInput">Estimated Hours (optional):</label>
+                <input type="number" id="estimatorHoursInput" min="0.5" max="24" step="0.5" placeholder="e.g., 2.5">
+            </div>
+            <div class="estimator-result" id="estimatorResult"></div>
+            <div class="estimator-actions">
+                <button class="estimator-btn" id="estimateBtn"><i class="fa-solid fa-calculator"></i> Estimate</button>
+                <button class="estimator-btn split-btn" id="splitTaskBtn" style="display: none;"><i class="fa-solid fa-scissors"></i> Split Task</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="js/script.js"></script>
 </body>

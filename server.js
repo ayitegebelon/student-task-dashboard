@@ -26,9 +26,24 @@ db.run(`
         text TEXT NOT NULL,
         priority TEXT DEFAULT 'medium',
         completed INTEGER DEFAULT 0,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        due_date TEXT,
+        subject TEXT DEFAULT 'General'
     )
 `);
+
+// Add new columns if they don't exist (for backward compatibility)
+db.run(`ALTER TABLE tasks ADD COLUMN due_date TEXT`, (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+        console.error("Error adding due_date column:", err.message);
+    }
+});
+
+db.run(`ALTER TABLE tasks ADD COLUMN subject TEXT DEFAULT 'General'`, (err) => {
+    if (err && !err.message.includes('duplicate column name')) {
+        console.error("Error adding subject column:", err.message);
+    }
+});
 
 // --- REST API ENDPOINTS ---
 
@@ -43,25 +58,49 @@ app.get('/api/tasks', (req, res) => {
 
 // POST Task
 app.post('/api/tasks', (req, res) => {
-    const { text, priority } = req.body;
+    const { text, priority, due_date, subject } = req.body;
     if (!text) return res.status(400).json({ error: "Task text is required" });
 
     db.run(
-        'INSERT INTO tasks (text, priority) VALUES (?, ?)',
-        [text, priority || 'medium'],
+        'INSERT INTO tasks (text, priority, due_date, subject) VALUES (?, ?, ?, ?)',
+        [text, priority || 'medium', due_date || null, subject || 'General'],
         function (err) {
             if (err) return res.status(500).json({ error: err.message });
-            res.json({ id: this.lastID, text, priority: priority || 'medium', completed: false });
+            res.json({ id: this.lastID, text, priority: priority || 'medium', due_date, subject: subject || 'General', completed: false });
         }
     );
 });
 
 // PUT Toggle Task
 app.put('/api/tasks/:id', (req, res) => {
-    const { completed } = req.body;
+    const { completed, due_date, subject } = req.body;
+    
+    // Build dynamic update query based on provided fields
+    let updateFields = [];
+    let updateValues = [];
+    
+    if (completed !== undefined) {
+        updateFields.push('completed = ?');
+        updateValues.push(completed ? 1 : 0);
+    }
+    if (due_date !== undefined) {
+        updateFields.push('due_date = ?');
+        updateValues.push(due_date);
+    }
+    if (subject !== undefined) {
+        updateFields.push('subject = ?');
+        updateValues.push(subject);
+    }
+    
+    if (updateFields.length === 0) {
+        return res.status(400).json({ error: "No fields to update" });
+    }
+    
+    updateValues.push(req.params.id);
+    
     db.run(
-        'UPDATE tasks SET completed = ? WHERE id = ?',
-        [completed ? 1 : 0, req.params.id],
+        `UPDATE tasks SET ${updateFields.join(', ')} WHERE id = ?`,
+        updateValues,
         function (err) {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ updated: this.changes });
