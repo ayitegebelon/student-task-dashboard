@@ -7,6 +7,7 @@ let activeSubjectFilter = null;
 let customSubjects = JSON.parse(localStorage.getItem('customSubjects')) || [];
 let customAlarmSound = localStorage.getItem('customAlarmSound') || null;
 let currentEstimation = null;
+let pendingAttachments = [];
 
 // Theme Management
 const themeToggle = document.getElementById("themeToggle");
@@ -67,38 +68,451 @@ function changeAccent(e) {
 themeToggle.addEventListener("click", toggleTheme);
 accentPreset.addEventListener("change", changeAccent);
 
-// DOM Elements
-const taskInput = document.getElementById("taskInput");
-const prioritySelect = document.getElementById("prioritySelect");
-const subjectSelect = document.getElementById("subjectSelect");
-const customSubjectInput = document.getElementById("customSubjectInput");
-const dueDateInput = document.getElementById("dueDateInput");
-const addBtn = document.getElementById("addBtn");
-const taskList = document.getElementById("taskList");
-const searchInput = document.getElementById("searchInput");
-const filterBtns = document.querySelectorAll(".filter-btn");
-const subjectFilters = document.getElementById("subjectFilters");
+// Analytics Functions
+function calculateStudyStreak() {
+    const completedDates = JSON.parse(localStorage.getItem('completedDates')) || [];
+    const today = new Date().toDateString();
+    
+    // Add today if not already present and there are completed tasks today
+    const todayCompleted = tasks.filter(t => t.completed).length > 0;
+    if (todayCompleted && !completedDates.includes(today)) {
+        completedDates.push(today);
+        localStorage.setItem('completedDates', JSON.stringify(completedDates));
+    }
+    
+    // Calculate streak
+    let streak = 0;
+    const sortedDates = [...completedDates].sort((a, b) => new Date(b) - new Date(a));
+    
+    for (let i = 0; i < sortedDates.length; i++) {
+        const currentDate = new Date(sortedDates[i]);
+        const expectedDate = new Date();
+        expectedDate.setDate(expectedDate.getDate() - i);
+        
+        if (sortedDates[i] === expectedDate.toDateString()) {
+            streak++;
+        } else {
+            break;
+        }
+    }
+    
+    return streak;
+}
 
-const totalEl = document.getElementById("total");
-const completedEl = document.getElementById("completed");
-const remainingEl = document.getElementById("remaining");
-const currentYearEl = document.getElementById("currentYear");
+function calculateCompletionRate() {
+    if (tasks.length === 0) return 0;
+    const completed = tasks.filter(t => t.completed).length;
+    return Math.round((completed / tasks.length) * 100);
+}
 
-const customAlarmSoundInput = document.getElementById("customAlarmSound");
-const testSoundBtn = document.getElementById("testSoundBtn");
+function updateProgressRing(percentage) {
+    const circle = document.querySelector('.progress-ring-circle');
+    const radius = circle.r.baseVal.value;
+    const circumference = 2 * Math.PI * radius;
+    const offset = circumference - (percentage / 100) * circumference;
+    
+    circle.style.strokeDashoffset = offset;
+    progressRingValueEl.textContent = percentage + '%';
+}
 
-const smartEstimatorBtn = document.getElementById("smartEstimatorBtn");
-const smartEstimatorModal = document.getElementById("smartEstimatorModal");
-const closeEstimatorModalBtn = document.getElementById("closeEstimatorModal");
-const estimatorTaskInput = document.getElementById("estimatorTaskInput");
-const estimatorHoursInput = document.getElementById("estimatorHoursInput");
-const estimatorResult = document.getElementById("estimatorResult");
-const estimateBtn = document.getElementById("estimateBtn");
-const splitTaskBtn = document.getElementById("splitTaskBtn");
+function updateWeeklyChart() {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const today = new Date();
+    const weekData = {};
+    
+    // Initialize week data
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - today.getDay() + i);
+        weekData[date.toDateString()] = 0;
+    }
+    
+    // Count completed tasks per day
+    const completedDates = JSON.parse(localStorage.getItem('completedDates')) || [];
+    completedDates.forEach(date => {
+        if (weekData.hasOwnProperty(date)) {
+            weekData[date]++;
+        }
+    });
+    
+    // Update chart bars
+    const bars = weeklyChartEl.querySelectorAll('.chart-bar');
+    const maxCount = Math.max(...Object.values(weekData), 1);
+    
+    bars.forEach((bar, index) => {
+        const dayName = bar.getAttribute('data-day');
+        const date = new Date(today);
+        const dayIndex = days.indexOf(dayName);
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() - today.getDay() + dayIndex);
+        const count = weekData[targetDate.toDateString()] || 0;
+        const height = (count / maxCount) * 100;
+        
+        bar.querySelector('.bar-fill').style.height = Math.max(height, 4) + '%';
+    });
+}
+
+function updateAnalytics() {
+    const completedCount = tasks.filter(t => t.completed).length;
+    const streak = calculateStudyStreak();
+    const rate = calculateCompletionRate();
+    
+    totalCompletedEl.textContent = completedCount;
+    studyStreakEl.textContent = streak + ' day' + (streak !== 1 ? 's' : '');
+    completionRateEl.textContent = rate + '%';
+    
+    updateProgressRing(rate);
+    updateWeeklyChart();
+}
+
+// Attachment Functions
+function addAttachment() {
+    const url = attachmentUrlInput.value.trim();
+    const name = attachmentNameInput.value.trim();
+    
+    if (!url || !name) return;
+    
+    // Validate URL format
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        alert('Please enter a valid URL starting with http:// or https://');
+        return;
+    }
+    
+    const attachment = { url, name, id: Date.now() };
+    pendingAttachments.push(attachment);
+    
+    renderAttachmentsList();
+    attachmentUrlInput.value = '';
+    attachmentNameInput.value = '';
+}
+
+function renderAttachmentsList() {
+    attachmentsListEl.innerHTML = '';
+    
+    pendingAttachments.forEach((attachment, index) => {
+        const pill = document.createElement('div');
+        pill.className = 'attachment-pill remove-attachment';
+        pill.innerHTML = `<i class="fa-solid fa-link"></i> ${attachment.name} <i class="fa-solid fa-xmark"></i>`;
+        pill.onclick = () => removeAttachment(index);
+        attachmentsListEl.appendChild(pill);
+    });
+}
+
+function removeAttachment(index) {
+    pendingAttachments.splice(index, 1);
+    renderAttachmentsList();
+}
+
+function renderTaskAttachments(task) {
+    if (!task.attachments || task.attachments.length === 0) return '';
+    
+    return task.attachments.map(attachment => {
+        const icon = attachment.url.includes('pdf') ? 'fa-file-pdf' : 'fa-link';
+        return `<a href="${attachment.url}" target="_blank" class="attachment-pill">
+            <i class="fa-solid ${icon}"></i> ${attachment.name}
+        </a>`;
+    }).join('');
+}
+
+// Subtask Functions
+function renderSubtasks(task) {
+    if (!task.subtasks || task.subtasks.length === 0) return '';
+    
+    const completedCount = task.subtasks.filter(s => s.completed).length;
+    const progress = Math.round((completedCount / task.subtasks.length) * 100);
+    
+    let html = `
+        <div class="task-subtasks">
+            <div class="subtask-progress">
+                <span>${completedCount}/${task.subtasks.length} completed</span>
+                <div class="subtask-progress-bar">
+                    <div class="subtask-progress-fill" style="width: ${progress}%"></div>
+                </div>
+            </div>
+            <div class="subtask-list">
+    `;
+    
+    task.subtasks.forEach((subtask, index) => {
+        html += `
+            <div class="subtask-item ${subtask.completed ? 'completed' : ''}">
+                <input type="checkbox" class="subtask-checkbox" 
+                    ${subtask.completed ? 'checked' : ''} 
+                    data-task-id="${task.id}" 
+                    data-subtask-index="${index}">
+                <span class="subtask-text">${subtask.text}</span>
+            </div>
+        `;
+    });
+    
+    html += `
+            </div>
+            <button class="add-subtask-btn" data-task-id="${task.id}">+ Add Subtask</button>
+        </div>
+    `;
+    
+    return html;
+}
+
+// Attachment event listeners
+addAttachmentBtn.addEventListener("click", addAttachment);
+
+// DOM Elements - will be initialized after DOM loads
+let taskInput, prioritySelect, subjectSelect, customSubjectInput, dueDateInput, addBtn, taskList, searchInput, filterBtns, subjectFilters;
+let totalEl, completedEl, remainingEl, currentYearEl;
+let userDisplay, logoutBtn;
+let totalCompletedEl, studyStreakEl, completionRateEl, progressRingValueEl, weeklyChartEl;
+let attachmentUrlInput, attachmentNameInput, addAttachmentBtn, attachmentsListEl;
+let customAlarmSoundInput, testSoundBtn;
+let smartEstimatorBtn, smartEstimatorModal, closeEstimatorModalBtn, estimatorTaskInput, estimatorHoursInput, estimatorResult, estimateBtn, splitTaskBtn;
+let closeModalBtn, startTimerBtn, pauseTimerBtn, resetTimerBtn, timerPresetBtns, timerCustomMinutes, pomodoroModal;
+
+// Initialize DOM elements
+function initializeDOMElements() {
+    taskInput = document.getElementById("taskInput");
+    prioritySelect = document.getElementById("prioritySelect");
+    subjectSelect = document.getElementById("subjectSelect");
+    customSubjectInput = document.getElementById("customSubjectInput");
+    dueDateInput = document.getElementById("dueDateInput");
+    addBtn = document.getElementById("addBtn");
+    taskList = document.getElementById("taskList");
+    searchInput = document.getElementById("searchInput");
+    filterBtns = document.querySelectorAll(".filter-btn");
+    subjectFilters = document.getElementById("subjectFilters");
+
+    totalEl = document.getElementById("total");
+    completedEl = document.getElementById("completed");
+    remainingEl = document.getElementById("remaining");
+    currentYearEl = document.getElementById("currentYear");
+
+    userDisplay = document.getElementById("userDisplay");
+    logoutBtn = document.getElementById("logoutBtn");
+
+    totalCompletedEl = document.getElementById("totalCompleted");
+    studyStreakEl = document.getElementById("studyStreak");
+    completionRateEl = document.getElementById("completionRate");
+    progressRingValueEl = document.getElementById("progressRingValue");
+    weeklyChartEl = document.getElementById("weeklyChart");
+
+    attachmentUrlInput = document.getElementById("attachmentUrl");
+    attachmentNameInput = document.getElementById("attachmentName");
+    addAttachmentBtn = document.getElementById("addAttachmentBtn");
+    attachmentsListEl = document.getElementById("attachmentsList");
+
+    customAlarmSoundInput = document.getElementById("customAlarmSound");
+    testSoundBtn = document.getElementById("testSoundBtn");
+
+    smartEstimatorBtn = document.getElementById("smartEstimatorBtn");
+    smartEstimatorModal = document.getElementById("smartEstimatorModal");
+    closeEstimatorModalBtn = document.getElementById("closeEstimatorModal");
+    estimatorTaskInput = document.getElementById("estimatorTaskInput");
+    estimatorHoursInput = document.getElementById("estimatorHoursInput");
+    estimatorResult = document.getElementById("estimatorResult");
+    estimateBtn = document.getElementById("estimateBtn");
+    splitTaskBtn = document.getElementById("splitTaskBtn");
+
+    // Pomodoro timer elements
+    closeModalBtn = document.getElementById("closeModal");
+    startTimerBtn = document.getElementById("startTimer");
+    pauseTimerBtn = document.getElementById("pauseTimer");
+    resetTimerBtn = document.getElementById("resetTimer");
+    timerPresetBtns = document.querySelectorAll(".timer-preset");
+    timerCustomMinutes = document.getElementById("timerCustomMinutes");
+    pomodoroModal = document.getElementById("pomodoroModal");
+}
+
+// Initialize event listeners
+function initializeEventListeners() {
+    if (!addBtn || !taskInput || !subjectSelect) {
+        console.error("Required DOM elements not found");
+        return;
+    }
+
+    addBtn.addEventListener("click", addTask);
+    taskInput.addEventListener("keypress", (e) => { 
+        if (e.key === "Enter") addTask(); 
+    });
+
+    if (searchInput) {
+        searchInput.addEventListener("input", (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            render();
+        });
+    }
+
+    if (filterBtns) {
+        filterBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                filterBtns.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+                activeFilter = btn.dataset.filter;
+                render();
+            });
+        });
+    }
+
+    if (subjectSelect) {
+        subjectSelect.addEventListener("change", (e) => {
+            if (e.target.value === "custom") {
+                customSubjectInput.style.display = "block";
+                customSubjectInput.focus();
+            } else {
+                customSubjectInput.style.display = "none";
+                customSubjectInput.value = "";
+            }
+        });
+    }
+
+    if (subjectFilters) {
+        subjectFilters.addEventListener("click", (e) => {
+            if (e.target.classList.contains("subject-filter")) {
+                const subject = e.target.dataset.subject;
+                activeSubjectFilter = subject;
+                render();
+            }
+        });
+    }
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', handleLogout);
+    }
+
+    // Pomodoro timer event listeners
+    if (closeModalBtn) {
+        closeModalBtn.addEventListener("click", closePomodoroModal);
+    }
+    
+    if (startTimerBtn) {
+        startTimerBtn.addEventListener("click", startTimer);
+    }
+    
+    if (pauseTimerBtn) {
+        pauseTimerBtn.addEventListener("click", pauseTimer);
+    }
+    
+    if (resetTimerBtn) {
+        resetTimerBtn.addEventListener("click", resetTimer);
+    }
+    
+    if (timerPresetBtns) {
+        timerPresetBtns.forEach(btn => {
+            btn.addEventListener("click", () => {
+                const minutes = parseInt(btn.dataset.minutes);
+                setTimerDuration(minutes);
+            });
+        });
+    }
+    
+    if (timerCustomMinutes) {
+        timerCustomMinutes.addEventListener("input", (e) => {
+            const minutes = parseInt(e.target.value) || 25;
+            e.target.value = minutes;
+            timerPresetBtns.forEach(b => b.classList.remove("active"));
+            setTimerDuration(minutes);
+        });
+    }
+    
+    if (pomodoroModal) {
+        pomodoroModal.addEventListener("click", (e) => {
+            if (e.target === pomodoroModal) {
+                closePomodoroModal();
+            }
+        });
+    }
+
+    // Smart estimator event listeners
+    if (smartEstimatorBtn) {
+        smartEstimatorBtn.addEventListener("click", () => {
+            smartEstimatorModal.style.display = "flex";
+        });
+    }
+    
+    if (closeEstimatorModalBtn) {
+        closeEstimatorModalBtn.addEventListener("click", () => {
+            smartEstimatorModal.style.display = "none";
+        });
+    }
+    
+    if (estimateBtn) {
+        estimateBtn.addEventListener("click", () => {
+            const taskName = estimatorTaskInput.value.trim();
+            const hours = estimatorHoursInput.value.trim();
+            const result = calculateWorkload(taskName, hours);
+            estimatorResult.innerHTML = result.html;
+            splitTaskBtn.style.display = result.sessions > 1 ? "inline-block" : "none";
+            currentEstimation = result;
+        });
+    }
+    
+    if (splitTaskBtn) {
+        splitTaskBtn.addEventListener("click", () => {
+            if (currentEstimation && currentEstimation.sessions > 1) {
+                const baseTask = estimatorTaskInput.value.trim();
+                for (let i = 1; i <= currentEstimation.sessions; i++) {
+                    taskInput.value = `${baseTask} - Part ${i}`;
+                    addTask();
+                }
+                smartEstimatorModal.style.display = "none";
+                estimatorTaskInput.value = "";
+                estimatorHoursInput.value = "";
+                estimatorResult.innerHTML = "";
+                splitTaskBtn.style.display = "none";
+            }
+        });
+    }
+
+    // Custom sound event listeners
+    if (customAlarmSoundInput) {
+        customAlarmSoundInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                customAlarmSound = event.target.result;
+                localStorage.setItem('customAlarmSound', customAlarmSound);
+                alert("Custom alarm sound saved!");
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    if (testSoundBtn) {
+        testSoundBtn.addEventListener("click", () => {
+            playCustomAudio();
+        });
+    }
+}
 
 // Set Footer Year
 if (currentYearEl) {
     currentYearEl.textContent = new Date().getFullYear();
+}
+
+// Display user info and handle logout
+function displayUserInfo() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (user && userDisplay) {
+        userDisplay.textContent = `Hello, ${user.username}`;
+    }
+}
+
+async function handleLogout() {
+    try {
+        await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+    } catch (error) {
+        console.error('Logout error:', error);
+        localStorage.removeItem('user');
+        window.location.href = 'login.html';
+    }
+}
+
+if (logoutBtn) {
+    logoutBtn.addEventListener('click', handleLogout);
 }
 
 // Event Listeners
@@ -167,7 +581,9 @@ async function addTask() {
         text: text,
         priority: prioritySelect.value,
         subject: subjectValue,
-        due_date: dueDateInput.value || null
+        due_date: dueDateInput.value || null,
+        attachments: pendingAttachments.length > 0 ? pendingAttachments : [],
+        subtasks: []
     };
 
     try {
@@ -181,6 +597,8 @@ async function addTask() {
         customSubjectInput.value = "";
         customSubjectInput.style.display = "none";
         subjectSelect.value = "General";
+        pendingAttachments = [];
+        renderAttachmentsList();
         fetchTasks();
     } catch (error) {
         console.error("Error adding task:", error);
@@ -198,6 +616,26 @@ async function toggleTask(id) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ completed: !task.completed })
         });
+        
+        // Update completed dates for analytics
+        const completedDates = JSON.parse(localStorage.getItem('completedDates')) || [];
+        const today = new Date().toDateString();
+        
+        if (!task.completed) {
+            // Task is being completed
+            if (!completedDates.includes(today)) {
+                completedDates.push(today);
+            }
+        } else {
+            // Task is being uncompleted - remove today if no other completed tasks
+            const otherCompletedToday = tasks.filter(t => t.id !== id && t.completed).length === 0;
+            if (otherCompletedToday) {
+                const index = completedDates.indexOf(today);
+                if (index > -1) completedDates.splice(index, 1);
+            }
+        }
+        localStorage.setItem('completedDates', JSON.stringify(completedDates));
+        
         fetchTasks();
     } catch (error) {
         console.error("Error updating task status:", error);
@@ -251,12 +689,19 @@ function render() {
         // Check if task is overdue
         const isOverdue = task.due_date && !task.completed && new Date(task.due_date) < new Date().setHours(0,0,0,0);
         
+        const attachmentsHtml = renderTaskAttachments(task);
+        const subtasksHtml = renderSubtasks(task);
+        
         li.innerHTML = `
-            <div>
-                <span class="task-text">${task.text}</span>
-                <span class="priority-badge ${task.priority}">${task.priority}</span>
-                <span class="subject-badge">${task.subject || 'General'}</span>
-                ${task.due_date ? `<span class="due-date-badge ${isOverdue ? 'overdue' : ''}">${isOverdue ? 'Overdue: ' : ''}${task.due_date}</span>` : ''}
+            <div style="flex: 1;">
+                <div>
+                    <span class="task-text">${task.text}</span>
+                    <span class="priority-badge ${task.priority}">${task.priority}</span>
+                    <span class="subject-badge">${task.subject || 'General'}</span>
+                    ${task.due_date ? `<span class="due-date-badge ${isOverdue ? 'overdue' : ''}">${isOverdue ? 'Overdue: ' : ''}${task.due_date}</span>` : ''}
+                </div>
+                ${attachmentsHtml ? `<div class="task-attachments">${attachmentsHtml}</div>` : ''}
+                ${subtasksHtml}
             </div>
             <div class="task-actions">
                 ${!task.completed ? `<button class="action-btn focus" onclick="startFocusMode(${task.id})" title="Start Focus Mode">
@@ -274,7 +719,63 @@ function render() {
     });
 
     updateStatistics();
+    updateAnalytics();
     renderSubjectFilters();
+    
+    // Add event listeners for subtask checkboxes and add buttons
+    document.querySelectorAll('.subtask-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', handleSubtaskToggle);
+    });
+    
+    document.querySelectorAll('.add-subtask-btn').forEach(btn => {
+        btn.addEventListener('click', handleAddSubtask);
+    });
+}
+
+// Subtask event handlers
+async function handleSubtaskToggle(e) {
+    const taskId = parseInt(e.target.dataset.taskId);
+    const subtaskIndex = parseInt(e.target.dataset.subtaskIndex);
+    const task = tasks.find(t => t.id === taskId);
+    
+    if (!task || !task.subtasks[subtaskIndex]) return;
+    
+    task.subtasks[subtaskIndex].completed = e.target.checked;
+    
+    try {
+        await fetch(`${API_URL}/${taskId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subtasks: task.subtasks })
+        });
+        fetchTasks();
+    } catch (error) {
+        console.error("Error updating subtask:", error);
+    }
+}
+
+async function handleAddSubtask(e) {
+    const taskId = parseInt(e.target.dataset.taskId);
+    const subtaskText = prompt("Enter subtask text:");
+    
+    if (!subtaskText) return;
+    
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    if (!task.subtasks) task.subtasks = [];
+    task.subtasks.push({ text: subtaskText, completed: false });
+    
+    try {
+        await fetch(`${API_URL}/${taskId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subtasks: task.subtasks })
+        });
+        fetchTasks();
+    } catch (error) {
+        console.error("Error adding subtask:", error);
+    }
 }
 
 function renderSubjectFilters() {
@@ -882,5 +1383,7 @@ if (Notification.permission === "default") {
 document.addEventListener("DOMContentLoaded", () => {
     loadTheme();
     loadCustomSubjects();
+    displayUserInfo();
     fetchTasks();
+    updateAnalytics();
 });
