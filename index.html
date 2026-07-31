@@ -4,53 +4,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Task Dashboard</title>
-
     <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
 <header>
-    <h1>Student Task Dashboard</h1>
+    <h1><i class="fa-solid fa-graduation-cap"></i> Student Task Dashboard</h1>
 </header>
 
 <main class="container">
-
     <div class="task-box">
-        <input
-            type="text"
-            id="taskInput"
-            placeholder="Enter a new task">
-
-        <button id="addBtn">Add Task</button>
+        <input type="text" id="taskInput" placeholder="Enter a new academic task..." required>
+        <select id="prioritySelect">
+            <option value="Low">Low Priority</option>
+            <option value="Medium" selected>Medium Priority</option>
+            <option value="High">High Priority</option>
+        </select>
+        <button id="addBtn"><i class="fa-solid fa-plus"></i> Add Task</button>
     </div>
 
-    <ul id="taskList">
+    <div class="controls-box">
+        <div class="search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="searchInput" placeholder="Search tasks...">
+        </div>
+        <div class="filter-tabs">
+            <button class="filter-btn active" data-filter="all">All</button>
+            <button class="filter-btn" data-filter="active">Active</button>
+            <button class="filter-btn" data-filter="completed">Completed</button>
+        </div>
+    </div>
 
-    </ul>
+    <ul id="taskList"></ul>
 
     <div class="statistics">
-
-        <p>Total Tasks:
+        <div class="stat-item">
+            <p>Total Tasks</p>
             <span id="total">0</span>
-        </p>
-
-        <p>Completed:
+        </div>
+        <div class="stat-item">
+            <p>Completed</p>
             <span id="completed">0</span>
-        </p>
-
-        <p>Remaining:
+        </div>
+        <div class="stat-item">
+            <p>Remaining</p>
             <span id="remaining">0</span>
-        </p>
-
+        </div>
     </div>
-
 </main>
 
 <footer>
-    <p>Frontend Challenge</p>
+    <p>© <span id="currentYear"></span> INSA Cyber Talent Center | Student Task Dashboard</p>
 </footer>
 
 <script src="script.js"></script>
-
 </body>
 </html>
