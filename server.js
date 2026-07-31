@@ -283,9 +283,14 @@ app.delete('/api/tasks/:id', requireAuth, (req, res) => {
     });
 });
 
-// Fallback route to deliver index.html for root requests
+// Fallback route to deliver index.html for root requests (public landing page)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Route for protected dashboard
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
 // Start Server

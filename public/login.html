@@ -144,8 +144,9 @@
 
         const data = await res.json();
         if (res.ok) {
-          localStorage.setItem('user', JSON.stringify(data.user));
-          window.location.href = 'index.html';
+          const user = data.user;
+          localStorage.setItem('user', JSON.stringify(user));
+          window.location.href = 'dashboard.html';
         } else {
           errorDiv.textContent = data.message || 'Invalid login credentials.';
           errorDiv.style.display = 'block';
