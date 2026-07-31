@@ -1,9 +1,7 @@
 # Student Task Dashboard
 
 ## Objective
-
-Complete the application using HTML, CSS, JavaScript, Git, GitHub and teamwork workflow.
-
+Complete the application using HTML, CSS, JavaScript, Git, GitHub, teamwork workflow, and responsive design.
 ## Requirements
 
 - Add Task
