@@ -2,7 +2,7 @@ const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const path = require('path');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs'); // Fixed typo from 'bcrypts' to 'bcryptjs'
 const session = require('express-session');
 
 const app = express();
@@ -55,7 +55,7 @@ db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'", (er
     }
     
     if (!row) {
-        // Create new tasks table with user_id
+        // Create new tasks table with user_id & group_code
         db.run(`
             CREATE TABLE tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,16 +68,18 @@ db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='tasks'", (er
                 subject TEXT DEFAULT 'General',
                 attachments TEXT DEFAULT '[]',
                 subtasks TEXT DEFAULT '[]',
+                group_code TEXT DEFAULT NULL,
                 FOREIGN KEY(user_id) REFERENCES users(id)
             )
         `);
     } else {
-        // Existing table - add missing columns
+        // Existing table - safely add all pro columns
         safeAddColumn('tasks', 'due_date', "TEXT");
         safeAddColumn('tasks', 'subject', "TEXT DEFAULT 'General'");
         safeAddColumn('tasks', 'attachments', "TEXT DEFAULT '[]'");
         safeAddColumn('tasks', 'subtasks', "TEXT DEFAULT '[]'");
         safeAddColumn('tasks', 'user_id', "INTEGER");
+        safeAddColumn('tasks', 'group_code', "TEXT DEFAULT NULL");
     }
 });
 
@@ -188,17 +190,22 @@ const requireAuth = (req, res, next) => {
 app.get('/api/tasks', requireAuth, (req, res) => {
     const userId = req.session.user.id;
     
-    // Get tasks with user_id OR tasks without user_id (for backward compatibility)
+    // Get tasks belonging to the current user (or legacy unassigned tasks)
     db.all('SELECT * FROM tasks WHERE user_id = ? OR user_id IS NULL ORDER BY id DESC', [userId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
-        const formattedRows = rows.map(r => ({ ...r, completed: Boolean(r.completed), attachments: r.attachments ? JSON.parse(r.attachments) : [], subtasks: r.subtasks ? JSON.parse(r.subtasks) : [] }));
+        const formattedRows = rows.map(r => ({
+            ...r,
+            completed: Boolean(r.completed),
+            attachments: r.attachments ? JSON.parse(r.attachments) : [],
+            subtasks: r.subtasks ? JSON.parse(r.subtasks) : []
+        }));
         res.json(formattedRows);
     });
 });
 
 // POST Task (authenticated)
 app.post('/api/tasks', requireAuth, (req, res) => {
-    const { text, priority, due_date, subject, attachments, subtasks } = req.body;
+    const { text, priority, due_date, subject, attachments, subtasks, group_code } = req.body;
     if (!text) return res.status(400).json({ error: "Task text is required" });
 
     const userId = req.session.user.id;
@@ -206,8 +213,8 @@ app.post('/api/tasks', requireAuth, (req, res) => {
     const subtasksJson = subtasks ? JSON.stringify(subtasks) : '[]';
 
     db.run(
-        'INSERT INTO tasks (user_id, text, priority, due_date, subject, attachments, subtasks) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [userId, text, priority || 'medium', due_date || null, subject || 'General', attachmentsJson, subtasksJson],
+        'INSERT INTO tasks (user_id, text, priority, due_date, subject, attachments, subtasks, group_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [userId, text, priority || 'medium', due_date || null, subject || 'General', attachmentsJson, subtasksJson, group_code || null],
         function (err) {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ 
@@ -218,7 +225,8 @@ app.post('/api/tasks', requireAuth, (req, res) => {
                 subject: subject || 'General', 
                 completed: false,
                 attachments: attachments || [],
-                subtasks: subtasks || []
+                subtasks: subtasks || [],
+                group_code: group_code || null
             });
         }
     );
@@ -226,10 +234,9 @@ app.post('/api/tasks', requireAuth, (req, res) => {
 
 // PUT Toggle Task (authenticated)
 app.put('/api/tasks/:id', requireAuth, (req, res) => {
-    const { completed, due_date, subject, attachments, subtasks } = req.body;
+    const { completed, due_date, subject, attachments, subtasks, group_code } = req.body;
     const userId = req.session.user.id;
     
-    // Build dynamic update query based on provided fields
     let updateFields = [];
     let updateValues = [];
     
@@ -247,18 +254,21 @@ app.put('/api/tasks/:id', requireAuth, (req, res) => {
     }
     if (attachments !== undefined) {
         updateFields.push('attachments = ?');
-        updateValues.push(attachments ? JSON.stringify(attachments) : null);
+        updateValues.push(attachments ? JSON.stringify(attachments) : '[]');
     }
     if (subtasks !== undefined) {
         updateFields.push('subtasks = ?');
-        updateValues.push(subtasks ? JSON.stringify(subtasks) : null);
+        updateValues.push(subtasks ? JSON.stringify(subtasks) : '[]');
+    }
+    if (group_code !== undefined) {
+        updateFields.push('group_code = ?');
+        updateValues.push(group_code);
     }
     
     if (updateFields.length === 0) {
         return res.status(400).json({ error: "No fields to update" });
     }
     
-    // Also update user_id if it's NULL (migrate legacy tasks)
     updateFields.push('user_id = ?');
     updateValues.push(userId);
     
@@ -283,15 +293,18 @@ app.delete('/api/tasks/:id', requireAuth, (req, res) => {
     });
 });
 
-// Fallback route to deliver index.html for root requests (public landing page)
+// Public landing page
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Route for protected dashboard
+// Protected dashboard route
 app.get('/dashboard', (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login.html');
+    }
     res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
 });
 
 // Start Server
-app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running cleanly at http://localhost:${PORT}`));

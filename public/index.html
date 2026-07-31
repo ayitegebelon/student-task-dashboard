@@ -14,14 +14,19 @@
 <nav class="landing-nav">
     <div class="nav-container">
         <div class="nav-brand">
-            <i class="fa-solid fa-graduation-cap"></i>
-            <span>TaskFlow</span>
+            <a href="index.html" class="nav-brand-link">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>TaskFlow</span>
+            </a>
         </div>
         <div class="nav-links">
             <a href="#features" class="nav-link">Features</a>
             <a href="#how-it-works" class="nav-link">How It Works</a>
             <a href="login.html" class="btn btn-ghost">Sign In</a>
             <a href="register.html" class="btn btn-primary">Get Started</a>
+            <button id="landingThemeToggle" class="theme-toggle" title="Toggle Theme">
+                <i class="fa-solid fa-moon"></i>
+            </button>
         </div>
     </div>
 </nav>
@@ -45,43 +50,6 @@
                     <i class="fa-solid fa-sign-in-alt"></i> Sign In
                 </a>
             </div>
-            <div class="hero-stats">
-                <div class="stat-item">
-                    <span class="stat-number">25K+</span>
-                    <span class="stat-label">Students</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">1M+</span>
-                    <span class="stat-label">Tasks Completed</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number">4.9★</span>
-                    <span class="stat-label">Rating</span>
-                </div>
-            </div>
-        </div>
-        <div class="hero-visual">
-            <div class="hero-card card-pro">
-                <div class="hero-card-header">
-                    <div class="hero-card-title">Today's Focus</div>
-                    <div class="hero-card-badge">3 Tasks</div>
-                </div>
-                <div class="hero-card-body">
-                    <div class="hero-task-item">
-                        <div class="hero-task-checkbox checked"></div>
-                        <span class="hero-task-text completed">Complete Calculus Assignment</span>
-                    </div>
-                    <div class="hero-task-item">
-                        <div class="hero-task-checkbox checked"></div>
-                        <span class="hero-task-text completed">Read Chapter 5 - Physics</span>
-                    </div>
-                    <div class="hero-task-item">
-                        <div class="hero-task-checkbox"></div>
-                        <span class="hero-task-text">Research Paper Draft</span>
-                        <span class="hero-task-badge urgent">Due Tomorrow</span>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </section>
@@ -95,6 +63,9 @@
         </div>
         <div class="features-grid">
             <div class="feature-card card-pro">
+                <div class="feature-image-placeholder">
+
+                </div>
                 <div class="feature-icon">
                     <i class="fa-solid fa-bullseye"></i>
                 </div>
@@ -105,6 +76,8 @@
                 </p>
             </div>
             <div class="feature-card card-pro">
+                <div class="feature-image-placeholder">
+                </div>
                 <div class="feature-icon">
                     <i class="fa-solid fa-clock"></i>
                 </div>
@@ -115,6 +88,8 @@
                 </p>
             </div>
             <div class="feature-card card-pro">
+                <div class="feature-image-placeholder">
+                </div>
                 <div class="feature-icon">
                     <i class="fa-solid fa-chart-line"></i>
                 </div>
@@ -125,6 +100,8 @@
                 </p>
             </div>
             <div class="feature-card card-pro">
+                <div class="feature-image-placeholder">
+                </div>
                 <div class="feature-icon">
                     <i class="fa-solid fa-link"></i>
                 </div>
@@ -135,6 +112,8 @@
                 </p>
             </div>
             <div class="feature-card card-pro">
+                <div class="feature-image-placeholder">
+                </div>
                 <div class="feature-icon">
                     <i class="fa-solid fa-list-check"></i>
                 </div>
@@ -145,6 +124,8 @@
                 </p>
             </div>
             <div class="feature-card card-pro">
+                <div class="feature-image-placeholder">
+                </div>
                 <div class="feature-icon">
                     <i class="fa-solid fa-palette"></i>
                 </div>
@@ -222,14 +203,10 @@
 <footer class="landing-footer">
     <div class="footer-container">
         <div class="footer-brand">
-            <i class="fa-solid fa-graduation-cap"></i>
-            <span>TaskFlow</span>
-        </div>
-        <div class="footer-links">
-            <a href="#features" class="footer-link">Features</a>
-            <a href="#how-it-works" class="footer-link">How It Works</a>
-            <a href="login.html" class="footer-link">Sign In</a>
-            <a href="register.html" class="footer-link">Get Started</a>
+            <a href="index.html" class="footer-brand-link">
+                <i class="fa-solid fa-graduation-cap"></i>
+                <span>TaskFlow</span>
+            </a>
         </div>
         <div class="footer-copyright">
             © <span id="currentYear"></span> TaskFlow. All rights reserved.
@@ -239,6 +216,35 @@
 
 <script>
     document.getElementById('currentYear').textContent = new Date().getFullYear();
+    
+    // Theme toggle for landing page
+    const landingThemeToggle = document.getElementById('landingThemeToggle');
+    landingThemeToggle.addEventListener('click', () => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        
+        const icon = landingThemeToggle.querySelector('i');
+        if (newTheme === 'dark') {
+            icon.classList.remove('fa-sun');
+            icon.classList.add('fa-moon');
+        } else {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        }
+    });
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        const icon = landingThemeToggle.querySelector('i');
+        if (savedTheme === 'light') {
+            icon.classList.remove('fa-moon');
+            icon.classList.add('fa-sun');
+        }
+    }
 </script>
 </body>
 </html>

@@ -295,8 +295,12 @@ function updateTimerDisplay() {
 }
 
 function startTimer() {
-    if (timerRunning) return;
+    if (timerRunning) {
+        console.log("Timer already running");
+        return;
+    }
     
+    console.log("Starting timer...");
     timerRunning = true;
     timerInterval = setInterval(() => {
         timerSeconds--;
@@ -305,7 +309,16 @@ function startTimer() {
         if (timerSeconds <= 0) {
             clearInterval(timerInterval);
             timerRunning = false;
+            console.log("Timer finished, playing alarm");
             playAlarm();
+            
+            // Show notification if permitted
+            if (Notification.permission === "granted") {
+                new Notification("Focus Session Complete!", {
+                    body: "Great job! Take a break.",
+                    icon: "https://img.icons8.com/color/48/000000/task--v1.png"
+                });
+            }
         }
     }, 1000);
 }
@@ -332,16 +345,23 @@ function setTimerDuration(minutes) {
 }
 
 function playAlarm() {
+    // Try to play custom alarm first
     if (customAlarmAudio) {
         try {
             const audio = new Audio(customAlarmAudio);
-            audio.play().catch(() => {
+            audio.volume = 1.0;
+            audio.play().then(() => {
+                console.log("Custom alarm playing successfully");
+            }).catch((error) => {
+                console.log("Custom alarm failed, falling back to Web Audio:", error);
                 playWebAudioChime();
             });
         } catch (error) {
+            console.log("Custom alarm error, falling back to Web Audio:", error);
             playWebAudioChime();
         }
     } else {
+        console.log("No custom alarm, using Web Audio chime");
         playWebAudioChime();
     }
 }
@@ -350,8 +370,13 @@ function playWebAudioChime() {
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         
+        // Resume audio context if suspended (required by modern browsers)
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+        
         // Create a pleasant chime sound
-        const frequencies = [523.25, 659.25, 783.99]; // C5, E5, G5 (C major chord)
+        const frequencies = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 (C major chord + octave)
         
         frequencies.forEach((freq, index) => {
             const oscillator = audioContext.createOscillator();
@@ -360,17 +385,26 @@ function playWebAudioChime() {
             oscillator.type = 'sine';
             oscillator.frequency.setValueAtTime(freq, audioContext.currentTime);
             
-            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
             
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
             
-            oscillator.start(audioContext.currentTime + index * 0.1);
-            oscillator.stop(audioContext.currentTime + index * 0.1 + 0.5);
+            oscillator.start(audioContext.currentTime + index * 0.15);
+            oscillator.stop(audioContext.currentTime + index * 0.15 + 0.8);
         });
+        
+        console.log("Web Audio chime playing");
     } catch (error) {
         console.error("Web Audio API error:", error);
+        // Fallback: try to play a simple beep using HTML5 Audio
+        try {
+            const beep = new Audio('data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YU');
+            beep.play().catch(e => console.error("Fallback beep also failed:", e));
+        } catch (e) {
+            console.error("All audio methods failed");
+        }
     }
 }
 
@@ -382,12 +416,18 @@ function handleCustomAlarmUpload(event) {
     reader.onload = (e) => {
         customAlarmAudio = e.target.result;
         localStorage.setItem('customAlarmAudio', customAlarmAudio);
+        console.log("Custom alarm sound saved successfully");
         alert("Custom alarm sound saved!");
+    };
+    reader.onerror = (error) => {
+        console.error("Error reading audio file:", error);
+        alert("Error reading audio file. Please try a different file.");
     };
     reader.readAsDataURL(file);
 }
 
 function testAlarmSound() {
+    console.log("Testing alarm sound...");
     playAlarm();
 }
 
@@ -440,6 +480,18 @@ function closeEstimatorModal() {
         splitBtn.style.display = "none";
     }
     currentEstimation = null;
+}
+
+// Focus Mode Functions
+function startFocusMode(taskId) {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+    
+    // Open Spotify in new tab for focus music
+    window.open('https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M', '_blank');
+    
+    // Open Pomodoro modal with task name
+    openPomodoroModal(task.title);
 }
 
 // Attachment Functions

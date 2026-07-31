@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
+  <link rel="icon" type="image/png" href="https://img.icons8.com/color/48/000000/task--v1.png">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Register | Student Task Dashboard Pro</title>
+  <title>Register - TaskFlow</title>
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
@@ -103,6 +104,14 @@
 <body>
   <div class="auth-wrapper">
     <div class="auth-card">
+      <div class="auth-header">
+        <a href="index.html" class="auth-brand">
+          <i class="fa-solid fa-graduation-cap"></i> TaskFlow
+        </a>
+        <button id="registerThemeToggle" class="theme-toggle" title="Toggle Theme">
+          <i class="fa-solid fa-moon"></i>
+        </button>
+      </div>
       <header>
         <h2>Create Account 🚀</h2>
         <p>Join your study space today</p>
@@ -160,6 +169,35 @@
         errorDiv.style.display = 'block';
       }
     });
+
+    // Theme toggle for register page
+    const registerThemeToggle = document.getElementById('registerThemeToggle');
+    registerThemeToggle.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      
+      const icon = registerThemeToggle.querySelector('i');
+      if (newTheme === 'dark') {
+        icon.classList.remove('fa-sun');
+        icon.classList.add('fa-moon');
+      } else {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+      }
+    });
+    
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+      document.documentElement.setAttribute('data-theme', savedTheme);
+      const icon = registerThemeToggle.querySelector('i');
+      if (savedTheme === 'light') {
+        icon.classList.remove('fa-moon');
+        icon.classList.add('fa-sun');
+      }
+    }
   </script>
 </body>
 </html>
